@@ -36,18 +36,18 @@ char situation [][MAXSIZESI] = {
 #define MAP_SIZE sizeof(situation)/MAXSIZESI//地点数量
 
 int sptset[MAP_SIZE];//查找集合
-
 unsigned int distset[MAP_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};//距离集合
+int all_path[MAP_SIZE][2];
 
 //******************单源最短路径*************************************************
 //注意路线的保存 保存时可以考虑使用 2行N列的数组进行保存
 struct map_head_node* determine_spt(struct map_head_node *a_node, int *min_number);
 int settingpath(const struct map_head_node *a_node);
 
-int find_dis(struct map_head_node *map_head)//更改为两个地点
+int find_dis(struct map_head_node *map_head, int source, int end)//更改为两个地点
 {
     struct map_head_node *pnode = map_head;
-    int source = 5,end = 12, n;//源点终点
+    int n, i = 0;//源点终点
 
     n = source;
     sptset[source] = 1;//表示已查找过
@@ -61,6 +61,8 @@ int find_dis(struct map_head_node *map_head)//更改为两个地点
             return 1;//或者说当给出的终点是错误的那么可能会出现这种情况
         settingpath(pnode);//调整路径方便设置spt 固定distset
         sptset[n] = 1;
+        all_path[i][0] = pnode->name;
+        all_path[i++][1] = n;
         printf("%d --> %d  pathsize %d \n", pnode->name,n, distset[n] );
     }
 
@@ -246,19 +248,18 @@ int file_data(struct map_node *m_node, FILE* Rfmap_txt)
 
 
 
-int input_number(void)
+void input_number(void)
 {
-	int i, id;
+	int i;
 
 	printf("——————校园导航——————\n");
 	for(i = 0; i < MAP_SIZE; i++)
 		printf("%d: %s\n",i+1, situation[i]);
 	printf("0:退出\n");
 	printf("————————————————\n");
-	printf("请输入地点前的代号:");
-	scanf("%d", &id);
+    printf("请输入地点前的代号 起点:终点");
 
-	return id - 1;
+	return ;
 }
 
 
@@ -282,13 +283,67 @@ void print_map(struct map_head_node *map_head)
     return ;
 }
 
+void s_allpath(int source, int end);
+int id_f(int n);
+
 int main(void)
 {
-	int i;
+	int source, end;
 	struct map_head_node map_head[MAP_SIZE];
+	for(source = 0; source < MAP_SIZE; source++)
+    	for(end = 0; end < 2; end++)
+	    	all_path[source][end] = -1;
+
     map_init(map_head);
-	//print_map(map_head);//遍历图中每个头节点
-    find_dis(map_head);
+    input_number();
+    scanf("%d %d", &source, &end);
+    source = id_f(source);
+    end = id_f(end);
+    if((source == -1) || (end == -1))
+    {
+        printf("输入错误!\n");
+        return -1;
+    }
+//	print_map(map_head);//遍历图中每个头节点
+    find_dis(map_head, source, end);
+    s_allpath(source,end);
 
     return 0;
+}
+
+
+int id_f(int n)
+{
+	if(n >=  1 && n <= 15)
+		return n -1;
+	return -1;
+}
+
+int path[MAP_SIZE];
+void print_path(int n);
+
+void s_allpath(int source, int end)
+{
+	int i, j, n = 0;
+
+	for(j = 0; j < MAP_SIZE; j++)
+	{
+		for(i = 0; all_path[i][0] != -1; i++)
+			if(end == all_path[i][1])
+			{
+				path[n++] = all_path[i][1];
+				end = all_path[i][0];
+			}
+
+	}
+	printf("********\n");
+	n--;
+	printf("path:\n%s-->", situation[source]);
+ 	for(; n >= 0; n--)
+		if(n == 0)
+			printf("%s \t pathsize: %d\n", situation[path[n]], distset[path[n]]);
+		else
+			printf("%s-->", situation[path[n]]);
+	return ;
+
 }

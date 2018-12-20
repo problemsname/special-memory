@@ -1,0 +1,16 @@
+#windos:
+    *.exe
+    Desktop.ini
+#python:
+    *.py[cod]
+    *.so
+    *.egg
+    *.egg-info
+    dist
+    build
+#my configurations:
+    deplo_key_rsa
+    db.ini
+#linux c:
+    *.out
+    *.o
