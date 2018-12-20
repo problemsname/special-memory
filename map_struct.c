@@ -42,27 +42,46 @@ int sptset[MAP_SIZE];//查找集合
 unsigned int distset[MAP_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};//距离集合
 
 //******************单源最短路径*************************************************
-
+//大致完成 但是在查找结束顶点时发生地址越界 需要调整结束条件 
+//注意路线的保存 保存时可以考虑使用 2行N列的数组进行保存
+struct map_head_node* determine_spt(struct map_head_node *a_node, int *min_number);
 int settingpath(const struct map_head_node *a_node);
-int find_dis(const struct map_head_node *map_head)//更改为两个地点
+
+int setpath(const struct map_head_node *a_node);
+
+int find_dis(struct map_head_node *map_head)//更改为两个地点
 {
-    struct map_node *pnode = NULL;
-    int source = 0, i, j;//源点
+    struct map_head_node *pnode = NULL;
+    int source = 0,end = 14, n;//源点终点
+
+    n = source;
     sptset[source] = 1;//表示已查找过
     distset[source] = 0;//表示距离
     //初始化 集合
-    settingpath(&map_head[source]);//加入边
+    //settingpath(&map_head[source]);//加入边
     
+    while(n != end)
+    {
+        pnode = determine_spt(map_head, &n);//查找不在sptset中 但是在distset中
+        if(!pnode)
+            return 1;
+        setpath(pnode);
+        sptset[n] = 1;
+        printf("%d --> %d  pathsize %d \n", pnode->name,n, distset[n] );
 
-
+    }
+    printf("%d --> %d  \n", pnode->name,n);
 	return 0;
 }
 
 int settingpath(const struct map_head_node *a_node)
-{//将顶点的边加入dist集合
-    struct map_node *h_node = a_node->map_lnext;
+{
+    struct map_node *h_node = a_node[0].map_lnext;
     h_node = h_node->mn_next;
     int n = 0;
+
+    if(!sptset[a_node->name])
+        return 0;//判断当前是否为确定点 如果为确定点则可以进行 调整路径否则返回0
     while(h_node)
     {
         if(sptset[h_node->head_number])
@@ -70,7 +89,30 @@ int settingpath(const struct map_head_node *a_node)
             h_node = h_node->mn_next;
             continue;//继续寻找边中没有加入路径的成员 即不再spt集合中的值
         }
-        sptset[h_node->head_number] = sptset[a_node->name] + h_node->weight;//调整路径
+        distset[h_node->head_number] = distset[a_node->name] + h_node->weight;
+        h_node = h_node->mn_next;
+        n++;
+    }
+
+    return n;//返回值为是否已经设置 考虑会出现路径调整
+}
+    
+
+int setpath(const struct map_head_node *a_node)
+{//将顶点的边加入dist集合
+    struct map_node *h_node = a_node[0].map_lnext;
+    h_node = h_node->mn_next;
+    int n = 0;
+
+    while(h_node)
+    {
+        if(sptset[h_node->head_number])
+        {//判断spt集合中是否已经将其加入路径
+            h_node = h_node->mn_next;
+            continue;//继续寻找边中没有加入路径的成员 即不再spt集合中的值
+        }
+        distset[h_node->head_number] = distset[a_node->name] + h_node->weight;
+        
         h_node = h_node->mn_next;
         n++;
     }
@@ -85,9 +127,12 @@ int find_min(const struct map_head_node *a_node)
     int n = -1;
     struct map_node *h_node = a_node->map_lnext;
     h_node = h_node->mn_next;
-    if(!settingpath(a_node))
+    //顶点的边
+//注意对加入顶点的边 设置
+    if(!settingpath(a_node))//调整 在查找最短路径时会按照已经加入sptset集合中的顶点
         return -1;//调整路径
-
+//当前顶点所有边已经为true 在sptset中保存
+    //
     while(h_node)
     {
         if(sptset[h_node->head_number])
@@ -119,8 +164,9 @@ struct map_head_node* determine_spt(struct map_head_node *a_node, int *min_numbe
     int source = 0;
     struct map_head_node *min_node = NULL;
     int n;
-    while(!sptset[source++])
-        ;
+
+    while(sptset[source++])
+        ;//判断当前加入到sptset集合的顶点数量
     if(source == MAP_SIZE)
         return NULL;//所有顶点路径确定
     source = 0;
@@ -130,10 +176,14 @@ struct map_head_node* determine_spt(struct map_head_node *a_node, int *min_numbe
             continue;
         if(!min_node)
         {//第一个最小值 因为无法确定 会从哪个位置开始查找和在哪个位置找到可以查找的顶点
-            *min_number = settingpath(&a_node[source - 1]);
-            min_node = &a_node[source - 1];
+            *min_number = find_min(&a_node[source - 1]);
+            if(*min_number != -1)
+                min_node = &a_node[source - 1];
         }
-        n = settingpath(&a_node[source - 1]);//对distset中的最小值进行比较
+
+        n = find_min(&a_node[source - 1]);//对distset中的最小值进行比较
+        if((n == -1) || (*min_number == -1))
+            continue;
         if(distset[*min_number] > distset[n])
         {
             *min_number = n;
@@ -151,7 +201,7 @@ int map_init(struct map_head_node *p_mhnode)
 {//对表头结点初始化
 	int n = 0;
 	int i, status = 1;
-	FILE *Rfmap_txt = fopen("map.txt", "r");
+	FILE *Rfmap_txt = fopen("datadir/map.txt", "r");
 
 	if (NULL == Rfmap_txt)
 		exit(-1);//打开地图文件
@@ -241,7 +291,6 @@ int input_number(void)
 	return id - 1;
 }
 
-int prin[50];
 
 void print_map(struct map_head_node *map_head)
 {
