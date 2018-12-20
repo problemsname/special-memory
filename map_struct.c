@@ -61,6 +61,7 @@ int find_dis(struct map_head_node *map_head, int source, int end)//¸ü¸ÄÎªÁ½¸öµØµ
             return 1;//»òÕßËµµ±¸ø³öµÄÖÕµãÊÇ´íÎóµÄÄÇÃ´¿ÉÄÜ»á³öÏÖÕâÖÖÇé¿ö
         settingpath(pnode);//µ÷ÕûÂ·¾¶·½±ãÉèÖÃspt ¹Ì¶¨distset
         sptset[n] = 1;
+        printf("n = %d\n", n);
         all_path[i][0] = pnode->name;
         all_path[i++][1] = n;
         printf("%d --> %d  pathsize %d \n", pnode->name,n, distset[n] );
@@ -85,6 +86,7 @@ int settingpath(const struct map_head_node *a_node)
             continue;//¼ÌĞøÑ°ÕÒ±ßÖĞÃ»ÓĞ¼ÓÈëÂ·¾¶µÄ³ÉÔ± ¼´²»ÔÙspt¼¯ºÏÖĞµÄÖµ
         }
         distset[h_node->head_number] = distset[a_node->name] + h_node->weight;
+       // printf("distset[h_node->head_number] = %d,distset[a_node->name] = %d h_node->weight %d\n", distset[h_node->head_number], distset[a_node->name], h_node->weight);
         h_node = h_node->mn_next;
         n++;
     }
@@ -103,6 +105,7 @@ int find_min(const struct map_head_node *a_node)
 //×¢Òâ¶Ô¼ÓÈë¶¥µãµÄ±ß ÉèÖÃ
     if(!settingpath(a_node))//µ÷Õû ÔÚ²éÕÒ×î¶ÌÂ·¾¶Ê±»á°´ÕÕÒÑ¾­¼ÓÈësptset¼¯ºÏÖĞµÄ¶¥µã
         return -1;//µ÷ÕûÂ·¾¶
+    printf("a_node->name = %d\n", a_node->name);
 //µ±Ç°¶¥µãËùÓĞ±ßÒÑ¾­Îªtrue ÔÚsptsetÖĞ±£´æ
     while(h_node)
     {
@@ -111,6 +114,7 @@ int find_min(const struct map_head_node *a_node)
             h_node = h_node->mn_next;
             continue;
         }
+
         if(min > distset[h_node->head_number])
         {//²éÕÒµ±Ç°¶¥µã±ßµÄ×îĞ¡Öµ
             min = distset[h_node->head_number];
@@ -134,7 +138,8 @@ struct map_head_node* determine_spt(struct map_head_node *a_node, int *min_numbe
     //ÔİÊ±²»Ò×È·¶¨Â·¾¶ µ«ÊÇ¿ÉÒÔÈ¡µÃ×î¶ÌÂ·¾¶Öµ
     int source = 0;
     struct map_head_node *min_node = NULL;
-    int n;
+    int n, min;
+    int i;
 
     //while(sptset[source++])
      //   ;//ÅĞ¶Ïµ±Ç°¼ÓÈëµ½sptset¼¯ºÏµÄ¶¥µãÊıÁ¿
@@ -145,19 +150,22 @@ struct map_head_node* determine_spt(struct map_head_node *a_node, int *min_numbe
     {
         if(!sptset[source++])
             continue;//¹ıÂËÃ»ÓĞÈ·¶¨Â·¾¶µÄ¶¥µã
-
         if(!min_node)
         {//µÚÒ»¸ö×îĞ¡Öµ ÒòÎªÎŞ·¨È·¶¨ »á´ÓÄÄ¸öÎ»ÖÃ¿ªÊ¼²éÕÒºÍÔÚÄÄ¸öÎ»ÖÃÕÒµ½¿ÉÒÔ²éÕÒµÄ¶¥µã
             *min_number = find_min(&a_node[source - 1]);
             if(*min_number != -1)
+            {
                 min_node = &a_node[source - 1];
+                min = distset[*min_number];
+            }
         }
 
         n = find_min(&a_node[source - 1]);//¶ÔdistsetÖĞµÄ×îĞ¡Öµ½øĞĞ±È½Ï
-        if((n == -1) || (*min_number == -1))
+        if(n == -1)
             continue;
-        if(distset[*min_number] > distset[n])
+        if(min > distset[n])
         {
+            min = distset[n];
             *min_number = n;
             min_node = &a_node[source - 1];
         }
