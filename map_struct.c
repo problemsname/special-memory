@@ -51,7 +51,7 @@ int setpath(const struct map_head_node *a_node);
 
 int find_dis(struct map_head_node *map_head)//更改为两个地点
 {
-    struct map_head_node *pnode = NULL;
+    struct map_head_node *pnode = map_head;
     int source = 0,end = 14, n;//源点终点
 
     n = source;
@@ -64,11 +64,13 @@ int find_dis(struct map_head_node *map_head)//更改为两个地点
     {
         pnode = determine_spt(map_head, &n);//查找不在sptset中 但是在distset中
         if(!pnode)
+        {
+            printf("end %d n = %d \n", end , n);
             return 1;
+        }
         setpath(pnode);
         sptset[n] = 1;
         printf("%d --> %d  pathsize %d \n", pnode->name,n, distset[n] );
-
     }
     printf("%d --> %d  \n", pnode->name,n);
 	return 0;
@@ -165,11 +167,11 @@ struct map_head_node* determine_spt(struct map_head_node *a_node, int *min_numbe
     struct map_head_node *min_node = NULL;
     int n;
 
-    while(sptset[source++])
-        ;//判断当前加入到sptset集合的顶点数量
-    if(source == MAP_SIZE)
-        return NULL;//所有顶点路径确定
-    source = 0;
+    //while(sptset[source++])
+     //   ;//判断当前加入到sptset集合的顶点数量
+   // if(source == MAP_SIZE)
+    //    return NULL;//所有顶点路径确定
+   // source = 0;
     while(source < MAP_SIZE)
     {
         if(!sptset[source++])
