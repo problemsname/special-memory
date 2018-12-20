@@ -1,15 +1,13 @@
 # include<stdio.h>
 # include<stdlib.h>
 //# include<windows.h>
-//验收205 402 202 203
+
+
 #define MAXSIZESI 16//地点名称长度
 
 struct map_head_node {//暂定作为数组
 	int name;//顶点名称
 	struct map_node * map_lnext ;//相邻顶点
-/*
-	struct map_head_node* mhn_node;//下一个定点节点
-*/
 };
 
 struct map_node{
@@ -42,42 +40,35 @@ int sptset[MAP_SIZE];//查找集合
 unsigned int distset[MAP_SIZE] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};//距离集合
 
 //******************单源最短路径*************************************************
-//大致完成 但是在查找结束顶点时发生地址越界 需要调整结束条件 
 //注意路线的保存 保存时可以考虑使用 2行N列的数组进行保存
 struct map_head_node* determine_spt(struct map_head_node *a_node, int *min_number);
 int settingpath(const struct map_head_node *a_node);
 
-int setpath(const struct map_head_node *a_node);
-
 int find_dis(struct map_head_node *map_head)//更改为两个地点
 {
     struct map_head_node *pnode = map_head;
-    int source = 0,end = 14, n;//源点终点
+    int source = 5,end = 12, n;//源点终点
 
     n = source;
     sptset[source] = 1;//表示已查找过
     distset[source] = 0;//表示距离
     //初始化 集合
-    //settingpath(&map_head[source]);//加入边
     
     while(n != end)
-    {
+    {//功能为查找distset集合中最小的并且不再spt集合中的head_number和其前驱节点
         pnode = determine_spt(map_head, &n);//查找不在sptset中 但是在distset中
-        if(!pnode)
-        {
-            printf("end %d n = %d \n", end , n);
-            return 1;
-        }
-        setpath(pnode);
+        if(!pnode)//如果返回的是NULL 那么所有顶点的最短路径已经找到
+            return 1;//或者说当给出的终点是错误的那么可能会出现这种情况
+        settingpath(pnode);//调整路径方便设置spt 固定distset
         sptset[n] = 1;
         printf("%d --> %d  pathsize %d \n", pnode->name,n, distset[n] );
     }
-    printf("%d --> %d  \n", pnode->name,n);
+
 	return 0;
 }
 
 int settingpath(const struct map_head_node *a_node)
-{
+{//调整路径 将一个spt集合确定的顶点的边设置dist 注意当前顶点是需要在spt中已经确定的
     struct map_node *h_node = a_node[0].map_lnext;
     h_node = h_node->mn_next;
     int n = 0;
@@ -85,36 +76,13 @@ int settingpath(const struct map_head_node *a_node)
     if(!sptset[a_node->name])
         return 0;//判断当前是否为确定点 如果为确定点则可以进行 调整路径否则返回0
     while(h_node)
-    {
+    {//遍历顶点的边
         if(sptset[h_node->head_number])
         {//判断spt集合中是否已经将其加入路径
             h_node = h_node->mn_next;
             continue;//继续寻找边中没有加入路径的成员 即不再spt集合中的值
         }
         distset[h_node->head_number] = distset[a_node->name] + h_node->weight;
-        h_node = h_node->mn_next;
-        n++;
-    }
-
-    return n;//返回值为是否已经设置 考虑会出现路径调整
-}
-    
-
-int setpath(const struct map_head_node *a_node)
-{//将顶点的边加入dist集合
-    struct map_node *h_node = a_node[0].map_lnext;
-    h_node = h_node->mn_next;
-    int n = 0;
-
-    while(h_node)
-    {
-        if(sptset[h_node->head_number])
-        {//判断spt集合中是否已经将其加入路径
-            h_node = h_node->mn_next;
-            continue;//继续寻找边中没有加入路径的成员 即不再spt集合中的值
-        }
-        distset[h_node->head_number] = distset[a_node->name] + h_node->weight;
-        
         h_node = h_node->mn_next;
         n++;
     }
@@ -134,7 +102,6 @@ int find_min(const struct map_head_node *a_node)
     if(!settingpath(a_node))//调整 在查找最短路径时会按照已经加入sptset集合中的顶点
         return -1;//调整路径
 //当前顶点所有边已经为true 在sptset中保存
-    //
     while(h_node)
     {
         if(sptset[h_node->head_number])
@@ -175,7 +142,8 @@ struct map_head_node* determine_spt(struct map_head_node *a_node, int *min_numbe
     while(source < MAP_SIZE)
     {
         if(!sptset[source++])
-            continue;
+            continue;//过滤没有确定路径的顶点
+
         if(!min_node)
         {//第一个最小值 因为无法确定 会从哪个位置开始查找和在哪个位置找到可以查找的顶点
             *min_number = find_min(&a_node[source - 1]);
